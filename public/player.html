@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PartyQuiz · Player</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/styles.css" rel="stylesheet">
+</head>
+<body>
+<main class="container py-4" style="max-width:540px">
+  <div class="card"><div class="card-body">
+    <h5 class="mb-3">Unirse a partida</h5>
+    <div class="row g-2">
+      <div class="col-6"><input id="code" class="form-control" placeholder="PIN"></div>
+      <div class="col-6"><input id="name" class="form-control" placeholder="Tu nombre"></div>
+    </div>
+    <button id="btnJoin" class="btn btn-primary mt-3 w-100">Unirse</button>
+  </div></div>
+
+  <div id="game" class="d-none">
+    <div class="mt-3 card"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-center">
+        <div><span id="badgeIndex" class="badge bg-warning text-dark">0/0</span></div>
+        <div><span id="badgeTimer" class="badge bg-info">—</span></div>
+      </div>
+      <h4 id="qText" class="mt-2"></h4>
+      <div id="opts" class="d-grid gap-2"></div>
+      <div id="feedback" class="mt-2 small text-white-50"></div>
+    </div></div>
+  </div>
+</main>
+<script src="/socket.io/socket.io.js"></script>
+<script type="module">
+  import { connectSocket, fmtTime } from './client.js';
+  const s = connectSocket();
+  const $ = sel => document.querySelector(sel);
+  let joined=false, code=null, answered=false, tick=0, timerId=null, timeLimit=20;
+
+  $('#btnJoin').onclick = ()=>{
+    code = $('#code').value.trim(); const name=$('#name').value.trim();
+    s.emit('player:join', { code, name }, (res)=>{
+      if(!res.ok) return alert(res.error||'No se pudo unir');
+      $('#btnJoin').disabled = true; $('#code').disabled = true; $('#name').disabled = true;
+      $('#game').classList.remove('d-none'); joined=true;
+    });
+  };
+
+  function startTimer(t){
+    clearInterval(timerId); tick=t; $('#badgeTimer').textContent = fmtTime(tick);
+    timerId = setInterval(()=>{ tick--; $('#badgeTimer').textContent = fmtTime(tick); if(tick<=0){ clearInterval(timerId); } }, 1000);
+  }
+
+  s.on('game:question', ({ index, total, text, options, timeLimit: tl })=>{
+    timeLimit = tl; answered=false; $('#feedback').textContent='';
+    $('#badgeIndex').textContent = `${index+1}/${total}`;
+    $('#qText').textContent = text;
+    const opts = $('#opts'); opts.innerHTML='';
+    options.forEach((o,i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-outline-light';
+      btn.textContent = o; btn.onclick = ()=>{
+        if(answered) return; answered=true; s.emit('player:answer', { code, choice:i }, (res)=>{ if(!res.ok) alert(res.error); });
+        $('#feedback').textContent='Respuesta enviada';
+      };
+      opts.appendChild(btn);
+    });
+    startTimer(timeLimit);
+  });
+
+  s.on('game:reveal', ({ correct })=>{
+    const btns = Array.from(document.querySelectorAll('#opts button'));
+    btns.forEach((b,i)=>{ if(i===correct){ b.classList.remove('btn-outline-light'); b.classList.add('btn-success'); } else { b.classList.add('btn-outline-secondary'); }});
+  });
+
+  s.on('room:closed', ()=>{ alert('La sala se cerró'); location.reload(); });
+</script>
+</body>
+</html>
