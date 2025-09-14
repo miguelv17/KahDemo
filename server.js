@@ -71,11 +71,11 @@ function startNextQuestion(code){
   room.revealed = false;
 
   if(room.currentIndex >= room.questions.length){
-    const podium = [...room.players.values()]
+    const scoreboard = [...room.players.values()]
       .sort((a,b)=> b.score - a.score)
-      .slice(0,3)
       .map(p=>({ name:p.name, score:p.score }));
-    io.to(code).emit('game:over', { podium });
+    const podium = scoreboard.slice(0,3);
+    io.to(code).emit('game:over', { podium, scoreboard });
     return;
   }
 

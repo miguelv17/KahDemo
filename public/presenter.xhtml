@@ -8,9 +8,13 @@
   <link href="/styles.css" rel="stylesheet">
   <style>
     .answers-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:1rem; }
-    .answer { padding:1rem; border-radius:.75rem; border:1px solid #dee2e6; background:#fff; }
-    .answer.correct { background: rgba(25,135,84,.15); border-color: rgba(25,135,84,.5); }
+    .answer { border:1px solid #dee2e6; border-radius:.75rem; }
+    .answer.correct { border-color: rgba(25,135,84,.5); }
     .answer.dim { opacity:.6; }
+    .answer-0 { background: var(--bs-primary-bg-subtle); }
+    .answer-1 { background: var(--bs-success-bg-subtle); }
+    .answer-2 { background: var(--bs-warning-bg-subtle); }
+    .answer-3 { background: var(--bs-danger-bg-subtle); }
     .confetti { position:fixed; inset:0; pointer-events:none; }
   </style>
 </head>
@@ -129,8 +133,8 @@
     const ans=$('#answers'); ans.innerHTML='';
     options.forEach((o,i)=>{
       const div=document.createElement('div');
-      div.className='answer';
-      div.innerHTML=`<span class="badge bg-primary me-2">${['A','B','C','D'][i]}</span>${o}`;
+      div.className='card answer answer-'+i;
+      div.innerHTML=`<div class="card-body d-flex align-items-center"><span class="badge bg-secondary me-2">${['A','B','C','D'][i]}</span><span>${o}</span></div>`;
       ans.appendChild(div);
     });
   });
