@@ -8,8 +8,10 @@ const io = new Server(server, {
   cors: { origin: '*' }
 });
 
+// sirve /public
 app.use(express.static('public'));
 
+// redirige la raíz al host
 app.get('/', (req, res) => {
   res.redirect('/host.html');
 });
@@ -28,7 +30,7 @@ function createRoom({ title, timeLimit, basePoints, questions, hostSocketId }) {
     questions: Array.isArray(questions) ? questions : [],
     currentIndex: -1,
     hostId: hostSocketId,
-    players: new Map(), // socketId -> {name, score, answered: false, choice: null, timeLeft: 0, correct: false}
+    players: new Map(), // socketId -> {name, score, answered, choice, timeLeft, correct}
     questionStartAt: null
   });
   return rooms.get(code);
@@ -38,6 +40,7 @@ function getPublicPlayers(room){
   return [...room.players.values()].map(p=> ({ name: p.name, score: p.score }));
 }
 
+// endpoint de depuración
 app.get('/debug/rooms', (req, res) => {
   const snapshot = {};
   for (const [code, room] of rooms) {
@@ -56,19 +59,41 @@ io.on('connection', (socket) => {
 
   // Host crea sala
   socket.on('host:create_room', (payload, ack) => {
-    console.log('[host:create_room] payload:', payload);
-    ...
+    try {
+      console.log('[host:create_room] payload:', payload);
+      const room = createRoom({ ...payload, hostSocketId: socket.id });
+      socket.join(room.code);
+      ack?.({ ok: true, code: room.code });
+      io.to(room.code).emit('room:update', { title: room.title, players: getPublicPlayers(room) });
+    } catch (e) {
+      console.error(e);
+      ack?.({ ok: false, error: 'No se pudo crear la sala' });
+    }
   });
 
   // Jugador se une
   socket.on('player:join', ({ code, name }, ack) => {
     console.log('[player:join] code:', code, 'name:', name);
-    ...
-    if(!room) { 
+    const room = rooms.get(code);
+    if(!room) {
       console.log(' -> PIN inválido');
-      return ack?.({ ok:false, error:'PIN inválido' }); 
+      return ack?.({ ok:false, error:'PIN inválido' });
     }
-    ...
+    if([...room.players.values()].some(p => p.name.toLowerCase() === String(name).trim().toLowerCase())) {
+      console.log(' -> nombre repetido');
+      return ack?.({ ok:false, error:'Nombre ya en uso' });
+    }
+    socket.join(code);
+    room.players.set(socket.id, {
+      name: String(name).trim().slice(0,18),
+      score: 0,
+      answered: false,
+      choice: null,
+      timeLeft: 0,
+      correct:false
+    });
+    ack?.({ ok:true, title: room.title });
+    io.to(code).emit('room:update', { title: room.title, players: getPublicPlayers(room) });
     console.log(' -> OK, unido a', code);
   });
 
@@ -80,7 +105,6 @@ io.on('connection', (socket) => {
 
     room.currentIndex += 1;
     if(room.currentIndex >= room.questions.length){
-      // fin del juego
       const podium = [...room.players.values()]
         .sort((a,b)=> b.score - a.score)
         .slice(0,3)
@@ -120,7 +144,6 @@ io.on('connection', (socket) => {
     player.timeLeft = timeLeft;
     ack?.({ ok:true });
 
-    // opcional: avisar al host progreso de respuestas
     const answeredCount = [...room.players.values()].filter(p=>p.answered).length;
     io.to(code).emit('game:answered_count', { answered: answeredCount, total: room.players.size });
   });
@@ -150,10 +173,8 @@ io.on('connection', (socket) => {
 
   // Salida de sockets
   socket.on('disconnect', () => {
-    // eliminar jugador de cualquier sala
     for(const [code, room] of rooms){
       if(room.hostId === socket.id){
-        // si host sale, cerrar sala
         io.to(code).emit('room:closed');
         rooms.delete(code);
       } else if(room.players.has(socket.id)){
