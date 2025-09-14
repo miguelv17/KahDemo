@@ -136,6 +136,13 @@ io.on('connection', (socket) => {
     io.to(code).emit('room:update', { title: room.title, players: getPublicPlayers(room) });
   });
 
+  socket.on('presenter:join', ({ code }, ack) => {
+    const room = rooms.get(code);
+    if(!room) return ack?.({ ok:false, error:'Sala no encontrada' });
+    socket.join(code);
+    ack?.({ ok:true });
+  });
+
   socket.on('host:start_question', ({ code }, ack) => {
     const room = rooms.get(code);
     if(!room) return ack?.({ ok:false, error:'Sala no encontrada' });
@@ -162,15 +169,6 @@ io.on('connection', (socket) => {
     io.to(code).emit('game:answered_count', { answered: answeredCount, total: room.players.size });
   });
 
-  socket.on('host:reveal', ({ code }, ack) => {
-    const room = rooms.get(code);
-    if(!room) return ack?.({ ok:false, error:'Sala no encontrada' });
-    if(room.hostId !== socket.id) return ack?.({ ok:false, error:'No eres el host' });
-    clearTimers(room);
-    revealAndScore(code);
-    room.nextTimeoutId = setTimeout(() => startNextQuestion(code), 3000);
-    ack?.({ ok:true });
-  });
 
   socket.on('disconnect', () => {
     for(const [code, room] of rooms){

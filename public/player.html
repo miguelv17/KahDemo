@@ -26,7 +26,7 @@
       </div>
       <h4 id="qText" class="mt-2"></h4>
       <div id="opts" class="d-grid gap-2"></div>
-      <div id="feedback" class="mt-2 small text-white-50"></div>
+      <div id="feedback" class="mt-2 small text-muted"></div>
     </div></div>
   </div>
 </main>
@@ -58,7 +58,7 @@
     const opts = $('#opts'); opts.innerHTML='';
     options.forEach((o,i)=>{
       const btn = document.createElement('button');
-      btn.className = 'btn btn-outline-light';
+      btn.className = 'btn btn-outline-primary';
       btn.textContent = o; btn.onclick = ()=>{
         if(answered) return; answered=true; s.emit('player:answer', { code, choice:i }, (res)=>{ if(!res.ok) alert(res.error); });
         $('#feedback').textContent='Respuesta enviada';
@@ -70,7 +70,7 @@
 
   s.on('game:reveal', ({ correct })=>{
     const btns = Array.from(document.querySelectorAll('#opts button'));
-    btns.forEach((b,i)=>{ if(i===correct){ b.classList.remove('btn-outline-light'); b.classList.add('btn-success'); } else { b.classList.add('btn-outline-secondary'); }});
+    btns.forEach((b,i)=>{ if(i===correct){ b.classList.remove('btn-outline-primary'); b.classList.add('btn-success'); } else { b.classList.add('btn-outline-secondary'); }});
   });
 
   s.on('room:closed', ()=>{ alert('La sala se cerró'); location.reload(); });
