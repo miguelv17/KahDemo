@@ -10,6 +10,10 @@ const io = new Server(server, {
 
 app.use(express.static('public'));
 
+app.get('/', (req, res) => {
+  res.redirect('/host.html');
+});
+
 // ======= Estado en memoria =======
 const rooms = new Map();
 const genPIN = () => Math.floor(100000 + Math.random()*900000).toString();
