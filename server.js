@@ -38,30 +38,38 @@ function getPublicPlayers(room){
   return [...room.players.values()].map(p=> ({ name: p.name, score: p.score }));
 }
 
+app.get('/debug/rooms', (req, res) => {
+  const snapshot = {};
+  for (const [code, room] of rooms) {
+    snapshot[code] = {
+      title: room.title,
+      players: [...room.players.values()].map(p => ({ name: p.name, score: p.score })),
+      currentIndex: room.currentIndex,
+      qCount: room.questions.length
+    };
+  }
+  res.json(snapshot);
+});
+
 io.on('connection', (socket) => {
+  console.log('[socket] conectado', socket.id);
+
   // Host crea sala
   socket.on('host:create_room', (payload, ack) => {
-    try {
-      const room = createRoom({ ...payload, hostSocketId: socket.id });
-      socket.join(room.code);
-      ack?.({ ok: true, code: room.code });
-      io.to(room.code).emit('room:update', { title: room.title, players: getPublicPlayers(room) });
-    } catch (e) {
-      ack?.({ ok: false, error: 'No se pudo crear la sala' });
-    }
+    console.log('[host:create_room] payload:', payload);
+    ...
   });
 
   // Jugador se une
   socket.on('player:join', ({ code, name }, ack) => {
-    const room = rooms.get(code);
-    if(!room) return ack?.({ ok:false, error:'PIN inválido' });
-    if([...room.players.values()].some(p => p.name.toLowerCase() === String(name).trim().toLowerCase())) {
-      return ack?.({ ok:false, error:'Nombre ya en uso' });
+    console.log('[player:join] code:', code, 'name:', name);
+    ...
+    if(!room) { 
+      console.log(' -> PIN inválido');
+      return ack?.({ ok:false, error:'PIN inválido' }); 
     }
-    socket.join(code);
-    room.players.set(socket.id, { name: String(name).trim().slice(0,18), score: 0, answered: false, choice: null, timeLeft: 0, correct:false });
-    ack?.({ ok:true, title: room.title });
-    io.to(code).emit('room:update', { title: room.title, players: getPublicPlayers(room) });
+    ...
+    console.log(' -> OK, unido a', code);
   });
 
   // Host inicia pregunta
