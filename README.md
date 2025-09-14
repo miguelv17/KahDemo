@@ -11,6 +11,7 @@ npm run start
 
 - Host: http://localhost:3000/host.html
 - Jugador: http://localhost:3000/player.html
+ - Presentador: http://localhost:3000/presenter.xhtml
 
 Para que los móviles de tu red entren, usa `http://TU_IP_LOCAL:3000/player.html`.
 
