@@ -26,6 +26,9 @@
       <div class="col-6"><input id="name" class="form-control" placeholder="Tu nombre"></div>
     </div>
     <button id="btnJoin" class="btn btn-primary mt-3 w-100">Unirse</button>
+    <div id="nameAlert" class="alert alert-warning mt-2 d-none" role="alert">
+      Ese nombre no está permitido. Por favor elige otro.
+    </div>
   </div></div>
 
   <div id="game" class="d-none">
@@ -54,9 +57,19 @@
   const s = connectSocket();
   const $ = sel => document.querySelector(sel);
   let joined=false, code=null, answered=false, tick=0, timerId=null, timeLimit=20, playerName='';
+  const banned = ['puto','puta','cabron','pendejo','ching','verga','coño','culo','mierda','pito','pene','vagina','nalgas'];
+
+  const params = new URLSearchParams(location.search);
+  const codeParam = params.get('code');
+  if(codeParam) $('#code').value = codeParam;
 
   $('#btnJoin').onclick = ()=>{
+    $('#nameAlert').classList.add('d-none');
     code = $('#code').value.trim(); const name=$('#name').value.trim();
+    if(banned.some(w=> name.toLowerCase().includes(w))){
+      $('#nameAlert').classList.remove('d-none');
+      return;
+    }
     s.emit('player:join', { code, name }, (res)=>{
       if(!res.ok) return alert(res.error||'No se pudo unir');
       $('#btnJoin').disabled = true; $('#code').disabled = true; $('#name').disabled = true;
