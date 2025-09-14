@@ -66,7 +66,11 @@
   <!-- Vista de podio -->
   <div id="view-podium" class="d-none">
     <h2 class="mb-4">🏆 ¡Podio!</h2>
-    <ol id="podium" class="list-group list-group-numbered"></ol>
+    <ol id="podium" class="list-group list-group-numbered mb-4"></ol>
+    <div id="finalResults" class="d-none">
+      <h3 class="mb-3">Resultados finales</h3>
+      <div id="finalScoreboard" class="d-flex flex-column gap-2"></div>
+    </div>
     <canvas class="confetti" id="confetti"></canvas>
   </div>
 </main>
@@ -94,15 +98,17 @@
     $('#timeBar').className = 'progress-bar ' + (pct<25?'bg-danger':pct<60?'bg-warning text-dark':'bg-success');
   }
 
-  function renderScoreboard(list){
-    const c = $('#scoreboard'); c.innerHTML='';
+  let currScoreboard = [];
+
+  function renderScoreboard(list, showScore = true, sel = '#scoreboard'){
+    const c = $(sel); c.innerHTML='';
     list.forEach((p,i)=>{
       const row = document.createElement('div');
       row.className = 'd-flex align-items-center gap-2 p-2 rounded';
       row.style.background = i===0? 'rgba(255,215,0,.15)':'rgba(0,0,0,.03)';
-      row.innerHTML = `<div style="width:2rem;text-align:center">${i+1}</div>
-                       <div class="flex-grow-1">${p.name}</div>
-                       <div class="badge bg-secondary">${p.score}</div>`;
+      row.innerHTML = `<div style="width:2rem;text-align:center">${i+1}</div>`+
+                      `<div class="flex-grow-1">${p.name}</div>`+
+                      (showScore? `<div class="badge bg-secondary">${p.score}</div>`:'');
       c.appendChild(row);
     });
   }
@@ -138,6 +144,7 @@
   s.on('room:update', ({ players })=>{
     const ul = $('#playerList'); ul.innerHTML='';
     players.forEach(p=>{ const li=document.createElement('li'); li.className='list-group-item'; li.textContent=p.name; ul.appendChild(li); });
+    currScoreboard = players.map(p=>({ name:p.name, score:p.score||0 })).sort((a,b)=>b.score-a.score);
   });
 
   // Eventos de juego
@@ -157,15 +164,17 @@
       div.innerHTML=`<div class="card-body d-flex align-items-center"><span class="badge bg-secondary me-2">${['A','B','C','D'][i]}</span><span>${o}</span></div>`;
       ans.appendChild(div);
     });
+    renderScoreboard(currScoreboard, false);
   });
 
   s.on('game:reveal', ({ correct,scoreboard })=>{
     const cards=document.querySelectorAll('.answer');
     cards.forEach((c,i)=>{ if(i===correct) c.classList.add('correct'); else c.classList.add('dim'); });
-    renderScoreboard(scoreboard);
+    currScoreboard = scoreboard;
+    renderScoreboard(scoreboard, true);
   });
 
-  s.on('game:over', ({ podium })=>{
+  s.on('game:over', ({ podium,scoreboard })=>{
     $('#view-live').classList.add('d-none');
     $('#view-podium').classList.remove('d-none');
     const pod=$('#podium'); pod.innerHTML='';
@@ -176,6 +185,13 @@
       pod.appendChild(li);
     });
     fireConfetti();
+    setTimeout(()=>{
+      $('#confetti').classList.add('d-none');
+      $('#podium').classList.add('d-none');
+      $('#view-podium h2').textContent = 'Resultados finales';
+      $('#finalResults').classList.remove('d-none');
+      renderScoreboard(scoreboard, true, '#finalScoreboard');
+    },15000);
   });
 </script>
 </body>
