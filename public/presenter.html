@@ -46,6 +46,13 @@
     <div class="progress mt-4">
       <div id="timeBar" class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
     </div>
+    <div id="preGame" class="card mt-4">
+      <div class="card-body">
+        <h5 class="mb-3">Jugadores</h5>
+        <ul id="playerList" class="list-group list-group-flush mb-3"></ul>
+        <button id="btnStart" class="btn btn-primary w-100">Iniciar juego</button>
+      </div>
+    </div>
 
     <div class="card mt-4">
       <div class="card-body">
@@ -122,10 +129,20 @@
     });
   };
 
+  $('#btnStart').onclick = ()=>{
+    s.emit('presenter:start', { code }, (res)=>{ if(!res.ok) alert(res.error||'No se pudo iniciar'); });
+  };
+
+  s.on('room:update', ({ players })=>{
+    const ul = $('#playerList'); ul.innerHTML='';
+    players.forEach(p=>{ const li=document.createElement('li'); li.className='list-group-item'; li.textContent=p.name; ul.appendChild(li); });
+  });
+
   // Eventos de juego
   s.on('game:question', ({ index,total,text,options,timeLimit:tl,title })=>{
     $('#view-live').classList.remove('d-none');
     $('#view-podium').classList.add('d-none');
+    $('#preGame').classList.add('d-none');
     timeLimit = tl; startTimer(timeLimit);
     $('#badgeIndex').textContent = (index+1)+'/'+total;
     $('#title').textContent = title;

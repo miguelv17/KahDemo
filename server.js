@@ -141,6 +141,14 @@ io.on('connection', (socket) => {
     if(!room) return ack?.({ ok:false, error:'Sala no encontrada' });
     socket.join(code);
     ack?.({ ok:true });
+    socket.emit('room:update', { title: room.title, players: getPublicPlayers(room) });
+  });
+
+  socket.on('presenter:start', ({ code }, ack) => {
+    const room = rooms.get(code);
+    if(!room) return ack?.({ ok:false, error:'Sala no encontrada' });
+    startNextQuestion(code);
+    ack?.({ ok:true });
   });
 
   socket.on('host:start_question', ({ code }, ack) => {
