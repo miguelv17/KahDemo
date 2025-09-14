@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: partyquiz
+    name: qwizu
     env: node
     buildCommand: npm install
     startCommand: node server.js
