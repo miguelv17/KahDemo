@@ -1,4 +1,4 @@
-body{background:linear-gradient(180deg,#0f1020,#151734); color:#e9ecf1}
-.card{background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.15)}
-.badge-soft{background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1)}
+body{background:#f8f9fa; color:#212529}
+.card{background:#fff; border-color:rgba(0,0,0,.125)}
+.badge-soft{background:#e9ecef; border:1px solid #ced4da}
 .option{cursor:pointer}
