@@ -17,7 +17,7 @@ function createRoom({ title, timeLimit, basePoints, questions, hostSocketId }) {
   const code = genPIN();
   rooms.set(code, {
     code,
-    title: title || 'PartyQuiz',
+    title: title || 'Qwizu',
     timeLimit: Math.max(5, Number(timeLimit)||20),
     basePoints: Math.max(100, Number(basePoints)||1000),
     questions: Array.isArray(questions) ? questions : [],
@@ -210,4 +210,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`PartyQuiz listo en http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Qwizu listo en http://localhost:${PORT}`));
